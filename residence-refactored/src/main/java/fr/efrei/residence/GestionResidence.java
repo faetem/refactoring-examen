@@ -6,7 +6,9 @@ import fr.efrei.residence.contrat.TypeLogement;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import static fr.efrei.residence.contrat.Canal.*;
 import static fr.efrei.residence.contrat.Profil.*;
@@ -22,6 +24,17 @@ public class GestionResidence {
 
     private Database db = Database.getInstance();
     private CalculateurLoyer calculateur = CalculateurFactory.creer();
+
+    private PolitiqueProfil politique(Etudiant e) {
+        return calculateur.politique(e.getProfil());
+    }
+
+    private final Map<Canal, CanalNotification> canaux = new EnumMap<>(Canal.class);
+    {
+        canaux.put(EMAIL, new CanalEmail());
+        canaux.put(SMS, new CanalSms());
+        canaux.put(COURRIER, new CanalCourrier());
+    }
 
     // ------------------------------------------------------------------ étudiants
 
@@ -94,6 +107,7 @@ public class GestionResidence {
 
     public Bail attribuerLogement(Etudiant e, TypeLogement typeSouhaite, boolean parking, boolean menage, boolean laverie,
                                   boolean fibre, boolean assurance, LocalDate dateSignature) {
+        PolitiqueProfil politique = politique(e);
         System.out.println("--- Attribution d'un " + typeSouhaite + " à " + e.getNomComplet());
         Logement choisi = null;
         double loyer = 0;
@@ -103,23 +117,17 @@ public class GestionResidence {
             if (!l.estLibre()) continue;
             if (e.isPmr() && !l.estAccessiblePMR()) continue;
 
-            double loyerCandidat = calculateur.calculerLoyer(l, e.getProfil(), e.getEchelonBourse(), parking, menage,
+            double loyerCandidat = calculateur.calculerLoyer(l, politique, e.getEchelonBourse(), parking, menage,
                     laverie, fibre, assurance);
             double chargesCandidat = calculateur.calculerCharges(l);
             double total = loyerCandidat + chargesCandidat;
 
             boolean solvable;
-            if (e.getProfil().equals(BOURSIER)) {
-                solvable = true; // garantie Visale
-            } else if (e.getProfil().equals(ALTERNANT)) {
-                solvable = e.getRessourcesMensuelles() >= total * 2;
-            } else {
-                solvable = e.getRessourcesMensuelles() >= total * 3;
-            }
-            if (!solvable) {
+            if (!politique.estSolvable(e.getRessourcesMensuelles(), total)) {
                 System.out.println("  " + l.getNumero() + " : ressources insuffisantes (" + Utils.euros(total) + "/mois)");
                 continue;
             }
+
             choisi = l;
             loyer = loyerCandidat;
             charges = chargesCandidat;
@@ -138,27 +146,8 @@ public class GestionResidence {
 
         compteurBail++;
         String id = "BAIL-" + String.format("%03d", compteurBail);
-
-        double caution;
-        if (e.getProfil().equals(BOURSIER)) {
-            caution = 0;
-        } else if (e.getProfil().equals(INTERNATIONAL)) {
-            caution = loyer * 2;
-        } else {
-            caution = loyer;
-        }
-
-        double fraisDossier;
-        if (e.getProfil().equals(BOURSIER)) {
-            fraisDossier = 0;
-        } else if (e.getProfil().equals(INTERNATIONAL)) {
-            fraisDossier = 150;
-        } else {
-            fraisDossier = 100;
-        }
-
         Bail b = BailFactory.creer(id, e, choisi, dateSignature, parking, menage, laverie, fibre, assurance,
-                loyer, charges, Utils.arrondir(caution), fraisDossier);
+                loyer, charges, Utils.arrondir(politique.caution(loyer)), politique.fraisDossier());
 
         db.sauvegarderBail(b);
         System.out.println("  Bail " + id + " signé : " + choisi.getNumero() + ", " + Utils.euros(b.getLoyerChargesComprises())
@@ -200,11 +189,7 @@ public class GestionResidence {
         LocalDate echeance = YearMonth.parse(mois).atDay(5);
         double penalite = 0;
         if (datePaiement.isAfter(echeance)) {
-            if (!b.getEtudiant().getProfil().equals(BOURSIER)) {
-                penalite = b.getLoyerChargesComprises() * 0.05;
-                if (penalite < 10) penalite = 10;
-                penalite = Utils.arrondir(penalite);
-            }
+            penalite = politique(b.getEtudiant()).penaliteRetard(b.getLoyerChargesComprises());
         }
         double du = Utils.arrondir(b.getLoyerChargesComprises() + penalite);
         b.paiements.add(PaiementFactory.creer(mois, datePaiement, montant, penalite, du));
@@ -229,13 +214,8 @@ public class GestionResidence {
             System.out.println("Préavis impossible pour " + idBail);
             return false;
         }
-        int jours;
-        Profil profil = b.getEtudiant().getProfil();
-        if (profil.equals(BOURSIER) || profil.equals(ALTERNANT)) {
-            jours = 15;
-        } else {
-            jours = 30;
-        }
+
+        int jours = politique(b.getEtudiant()).dureePreavisJours();
         b.setDateFin(date.plusDays(jours));
         b.setStatut(PREAVIS);
         db.mettreAJourBail(b);
@@ -315,23 +295,11 @@ public class GestionResidence {
             if (b.soldeDu <= 0) continue;
             if (b.getStatut().equals(ANNULE)) continue;
             Etudiant e = b.getEtudiant();
-            Canal canal = e.getCanalPrefere();
-            switch (canal) {
-                case EMAIL:
-                    EmailService.envoyer(e.getEmail(), "RELANCE - loyer impayé",
-                            "Bonjour " + e.getPrenom() + ", il reste " + Utils.euros(b.soldeDu) + " à régler sur le bail " + b.getId() + ".");
-                    break;
-                case SMS:
-                    NotificateurFactory.creerSmsService().envoyerSms(e.getTelephone(),
-                            "Campus Vert : " + Utils.euros(b.soldeDu) + " impayés sur " + b.getId());
-                    break;
-                case COURRIER:
-                    NotificateurFactory.creerCourrierService().imprimerEtPoster(e.getNomComplet(), e.getAdresse(),
-                            "Relance loyer impayé",
-                            "Il reste " + Utils.euros(b.soldeDu) + " à régler sur le bail " + b.getId() + ".");
-                    break;
-                default:
-                    System.out.println("Canal inconnu " + canal);
+            CanalNotification strategie = canaux.get(e.getCanalPrefere());
+            if (strategie == null) {
+                System.out.println("Canal inconnu " + e.getCanalPrefere());
+            } else {
+                strategie.relancer(e, b);
             }
         }
     }
@@ -401,17 +369,12 @@ public class GestionResidence {
 
     private void notifier(Etudiant e, String sujet, String message) {
         Canal canal = e.getCanalPrefere();
-        if (canal.equals(EMAIL)) {
-            EmailService.envoyer(e.getEmail(), sujet, message);
-        } else if (canal.equals(SMS)) {
-            SmsService sms = NotificateurFactory.creerSmsService();
-            sms.envoyerSms(e.getTelephone(), sujet + " - " + message);
-        } else if (canal.equals(COURRIER)) {
-            CourrierService courrier = NotificateurFactory.creerCourrierService();
-            courrier.imprimerEtPoster(e.getNomComplet(), e.getAdresse(), sujet, message);
+        CanalNotification strategie = canaux.get(canal);
+        if (strategie != null) {
+            strategie.notifier(e, sujet, message);
         }
         // les internationaux reçoivent toujours un email en plus (demande de l'administration)
-        if (e.getProfil().equals(INTERNATIONAL) && !canal.equals(EMAIL)) {
+        if (politique(e).recoitToujoursEmail() && !canal.equals(EMAIL)) {
             EmailService.envoyer(e.getEmail(), "[EN] " + sujet, message);
         }
     }

@@ -1,0 +1,15 @@
+package fr.efrei.residence;
+
+public class PolitiqueStandard implements PolitiqueProfil {
+    public double appliquerRemise(double loyer, int echelon) { return loyer; }
+    public boolean estSolvable(double ressources, double total) { return ressources >= total * 3; }
+    public double caution(double loyer) { return loyer; }
+    public double fraisDossier() { return 100; }
+    public int dureePreavisJours() { return 30; }
+    public double penaliteRetard(double cc) {
+        double p = cc * 0.05;
+        if (p < 10) p = 10;
+        return Utils.arrondir(p);
+    }
+    public boolean recoitToujoursEmail() { return false; }
+}
