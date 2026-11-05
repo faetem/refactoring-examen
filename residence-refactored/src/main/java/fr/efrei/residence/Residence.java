@@ -1,5 +1,7 @@
 package fr.efrei.residence;
 
+import fr.efrei.residence.factory.LogementFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 

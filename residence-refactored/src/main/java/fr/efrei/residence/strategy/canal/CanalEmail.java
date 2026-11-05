@@ -1,4 +1,9 @@
-package fr.efrei.residence;
+package fr.efrei.residence.strategy.canal;
+
+import fr.efrei.residence.Bail;
+import fr.efrei.residence.EmailService;
+import fr.efrei.residence.Etudiant;
+import fr.efrei.residence.Utils;
 
 public class CanalEmail implements CanalNotification {
     public void notifier(Etudiant e, String sujet, String message) {

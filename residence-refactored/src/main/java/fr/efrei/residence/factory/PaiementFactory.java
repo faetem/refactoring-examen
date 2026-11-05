@@ -1,4 +1,6 @@
-package fr.efrei.residence;
+package fr.efrei.residence.factory;
+
+import fr.efrei.residence.Paiement;
 
 import java.time.LocalDate;
 

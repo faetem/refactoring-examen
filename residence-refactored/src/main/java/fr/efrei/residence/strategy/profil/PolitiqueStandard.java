@@ -1,4 +1,6 @@
-package fr.efrei.residence;
+package fr.efrei.residence.strategy.profil;
+
+import fr.efrei.residence.Utils;
 
 public class PolitiqueStandard implements PolitiqueProfil {
     public double appliquerRemise(double loyer, int echelon) { return loyer; }

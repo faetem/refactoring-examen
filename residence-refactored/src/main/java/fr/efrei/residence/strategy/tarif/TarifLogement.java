@@ -1,4 +1,6 @@
-package fr.efrei.residence;
+package fr.efrei.residence.strategy.tarif;
+
+import fr.efrei.residence.Logement;
 
 public interface TarifLogement {
     double loyerDeBase(Logement l);

@@ -7,7 +7,7 @@ import static fr.efrei.residence.contrat.TypeLogement.T1;
 
 public class T1 extends Logement {
 
-    T1(String numero, double surface, int etage, boolean meuble) {
+    public T1(String numero, double surface, int etage, boolean meuble) {
         super(numero, T1, surface, etage, meuble);
     }
 

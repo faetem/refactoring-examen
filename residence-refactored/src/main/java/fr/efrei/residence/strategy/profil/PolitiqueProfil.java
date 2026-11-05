@@ -1,4 +1,4 @@
-package fr.efrei.residence;
+package fr.efrei.residence.strategy.profil;
 
 public interface PolitiqueProfil {
     double appliquerRemise(double loyer, int echelon);

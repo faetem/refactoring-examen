@@ -1,5 +1,6 @@
-package fr.efrei.residence;
+package fr.efrei.residence.factory;
 
+import fr.efrei.residence.*;
 import fr.efrei.residence.contrat.TypeLogement;
 
 public class LogementFactory {

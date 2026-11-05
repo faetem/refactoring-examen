@@ -1,4 +1,7 @@
-package fr.efrei.residence;
+package fr.efrei.residence.factory;
+
+import fr.efrei.residence.CourrierService;
+import fr.efrei.residence.SmsService;
 
 public class NotificateurFactory {
     private NotificateurFactory() {}

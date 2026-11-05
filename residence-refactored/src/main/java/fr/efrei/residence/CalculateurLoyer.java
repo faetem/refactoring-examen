@@ -2,12 +2,12 @@ package fr.efrei.residence;
 
 import fr.efrei.residence.contrat.Profil;
 import fr.efrei.residence.contrat.TypeLogement;
+import fr.efrei.residence.decorator.*;
+import fr.efrei.residence.strategy.profil.*;
+import fr.efrei.residence.strategy.tarif.*;
 
 import java.util.EnumMap;
 import java.util.Map;
-
-import static fr.efrei.residence.contrat.Profil.*;
-import static fr.efrei.residence.contrat.TypeLogement.*;
 
 public class CalculateurLoyer {
 
@@ -56,20 +56,21 @@ public class CalculateurLoyer {
         TarifLogement tarif = tarif(l);
 
         // loyer de base selon le type
-        double loyer = tarif.loyerDeBase(l);
+        double base = tarif.loyerDeBase(l);
 
-        if (l.isMeuble()) loyer = loyer * 1.15;
-        if (l.getEtage() == 0) loyer = loyer * 0.95;
+        if (l.isMeuble()) base = base * 1.15;
+        if (l.getEtage() == 0) base = base * 0.95;
 
-        if (menage) loyer = loyer * tarif.coefficientMenage();
-        if (parking) loyer = loyer + 45;
-        if (laverie) loyer = loyer + 12;
-        if (fibre) loyer = loyer + tarif.supplementFibre();
-        if (assurance) loyer = loyer + 9;
+        // calcul du loyer selon les options
+        ComposantLoyer loyer = new LoyerBase(base);
+        if (menage) loyer = new OptionMenage(loyer, tarif.coefficientMenage());
+        if (parking) loyer = new OptionParking(loyer);
+        if (laverie) loyer = new OptionLaverie(loyer);
+        if (fibre) loyer = new OptionFibre(loyer, tarif.supplementFibre());
+        if (assurance) loyer = new OptionAssurance(loyer);
+        loyer = new RemiseProfil(loyer, politique, echelon);
 
-        loyer = politique.appliquerRemise(loyer, echelon);
-
-        return Math.round(loyer * 100.0) / 100.0;
+        return Math.round(loyer.montant() * 100.0) / 100.0;
 
     }
 

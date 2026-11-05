@@ -3,6 +3,12 @@ package fr.efrei.residence;
 import fr.efrei.residence.contrat.Canal;
 import fr.efrei.residence.contrat.Profil;
 import fr.efrei.residence.contrat.TypeLogement;
+import fr.efrei.residence.factory.*;
+import fr.efrei.residence.strategy.canal.CanalCourrier;
+import fr.efrei.residence.strategy.canal.CanalEmail;
+import fr.efrei.residence.strategy.canal.CanalNotification;
+import fr.efrei.residence.strategy.canal.CanalSms;
+import fr.efrei.residence.strategy.profil.PolitiqueProfil;
 
 import java.time.LocalDate;
 import java.time.YearMonth;

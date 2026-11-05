@@ -8,7 +8,7 @@ public class T2 extends Logement {
 
     private double surfaceBalcon;
 
-    T2(String numero, double surface, int etage, boolean meuble, double surfaceBalcon) {
+    public T2(String numero, double surface, int etage, boolean meuble, double surfaceBalcon) {
         super(numero, T2, surface, etage, meuble);
         this.surfaceBalcon = surfaceBalcon;
     }

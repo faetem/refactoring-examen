@@ -1,4 +1,4 @@
-package fr.efrei.residence;
+package fr.efrei.residence.strategy.profil;
 
 public class PolitiqueBoursier implements PolitiqueProfil {
     public double appliquerRemise(double loyer, int echelon) {

@@ -1,6 +1,7 @@
 package fr.efrei.residence;
 
 import fr.efrei.residence.contrat.StatutBail;
+import fr.efrei.residence.decorator.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -63,14 +64,17 @@ public class Bail {
     public void setFraisDossier(double f) { this.fraisDossier = f; }
 
     public String listerOptions() {
-        String s = "";
-        if (menage) s = s + "ménage, ";
-        if (parking) s = s + "parking, ";
-        if (laverie) s = s + "laverie, ";
-        if (fibre) s = s + "fibre, ";
-        if (assurance) s = s + "assurance, ";
-        if (s.length() == 0) return "aucune";
-        return s.substring(0, s.length() - 2);
+        ComposantLoyer c = new LoyerBase(0);
+        if (menage) c = new OptionMenage(c, 1);
+        if (parking) c = new OptionParking(c);
+        if (laverie) c = new OptionLaverie(c);
+        if (fibre) c = new OptionFibre(c, 0);
+        if (assurance) c = new OptionAssurance(c);
+
+        List<String> options = c.options();
+        if (options.isEmpty()) return "aucune";
+        return String.join(", ", options);
+
     }
 
     /**
