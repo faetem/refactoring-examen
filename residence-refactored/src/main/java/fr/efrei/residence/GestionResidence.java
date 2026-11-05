@@ -21,7 +21,7 @@ public class GestionResidence {
     public static int compteurBail = 0;
 
     private Database db = Database.getInstance();
-    private CalculateurLoyer calculateur = new CalculateurLoyer();
+    private CalculateurLoyer calculateur = CalculateurFactory.creer();
 
     // ------------------------------------------------------------------ étudiants
 
@@ -61,8 +61,8 @@ public class GestionResidence {
             System.out.println("Inscription refusée : adresse obligatoire pour le courrier");
             return null;
         }
-        Etudiant e = new Etudiant(nom, prenom, email, telephone, adresse, profil, echelonBourse, ressources, pmr,
-                canalPrefere);
+        Etudiant e = EtudiantFactory.creer(nom, prenom, email, telephone, adresse, profil, echelonBourse,
+                ressources, pmr, canalPrefere);
         db.sauvegarderEtudiant(e);
         System.out.println("Étudiant inscrit : " + e.getId() + " " + e.getNomComplet() + " (" + profil + ")");
         return e;
@@ -75,19 +75,14 @@ public class GestionResidence {
             System.out.println("Logement " + numero + " existe déjà");
             return null;
         }
-        Logement l = null;
-        if (type.equals(STUDIO)) {
-            l = new Studio(numero, surface, etage, meuble);
-        } else if (type.equals(T1)) {
-            l = new T1(numero, surface, etage, meuble);
-        } else if (type.equals(T2)) {
-            l = new T2(numero, surface, etage, meuble, param);
-        } else if (type.equals(COLOCATION)) {
-            if (param < 2) param = 2;
-            l = new Colocation(numero, surface, etage, meuble, param);
+        if (type.equals(COLOCATION) && param < 2) {
+            param = 2;
         }
-        if (l == null) {
-            System.out.println("Type de logement inconnu : " + type);
+        Logement l;
+        try {
+            l = LogementFactory.creer(type, numero, surface, etage, meuble, param);
+        } catch (IllegalArgumentException ex) {
+            System.out.println(ex.getMessage());
             return null;
         }
         Residence.logements.add(l);
@@ -113,7 +108,6 @@ public class GestionResidence {
             double chargesCandidat = calculateur.calculerCharges(l);
             double total = loyerCandidat + chargesCandidat;
 
-            // solvabilité
             boolean solvable;
             if (e.getProfil().equals(BOURSIER)) {
                 solvable = true; // garantie Visale
@@ -144,16 +138,7 @@ public class GestionResidence {
 
         compteurBail++;
         String id = "BAIL-" + String.format("%03d", compteurBail);
-        Bail b = new Bail(id, e, choisi, dateSignature);
-        b.parking = parking;
-        b.menage = menage;
-        b.laverie = laverie;
-        b.fibre = fibre;
-        b.assurance = assurance;
-        b.setLoyerHorsCharges(loyer);
-        b.setCharges(charges);
 
-        // dépôt de garantie
         double caution;
         if (e.getProfil().equals(BOURSIER)) {
             caution = 0;
@@ -162,16 +147,18 @@ public class GestionResidence {
         } else {
             caution = loyer;
         }
-        b.setCaution(Utils.arrondir(caution));
 
-        // frais de dossier
+        double fraisDossier;
         if (e.getProfil().equals(BOURSIER)) {
-            b.setFraisDossier(0);
+            fraisDossier = 0;
         } else if (e.getProfil().equals(INTERNATIONAL)) {
-            b.setFraisDossier(150);
+            fraisDossier = 150;
         } else {
-            b.setFraisDossier(100);
+            fraisDossier = 100;
         }
+
+        Bail b = BailFactory.creer(id, e, choisi, dateSignature, parking, menage, laverie, fibre, assurance,
+                loyer, charges, Utils.arrondir(caution), fraisDossier);
 
         db.sauvegarderBail(b);
         System.out.println("  Bail " + id + " signé : " + choisi.getNumero() + ", " + Utils.euros(b.getLoyerChargesComprises())
@@ -220,7 +207,7 @@ public class GestionResidence {
             }
         }
         double du = Utils.arrondir(b.getLoyerChargesComprises() + penalite);
-        b.paiements.add(new Paiement(mois, datePaiement, montant, penalite, du));
+        b.paiements.add(PaiementFactory.creer(mois, datePaiement, montant, penalite, du));
         b.soldeDu = Utils.arrondir(b.soldeDu + du - montant);
         db.mettreAJourBail(b);
 
@@ -335,11 +322,12 @@ public class GestionResidence {
                             "Bonjour " + e.getPrenom() + ", il reste " + Utils.euros(b.soldeDu) + " à régler sur le bail " + b.getId() + ".");
                     break;
                 case SMS:
-                    new SmsService().envoyerSms(e.getTelephone(),
+                    NotificateurFactory.creerSmsService().envoyerSms(e.getTelephone(),
                             "Campus Vert : " + Utils.euros(b.soldeDu) + " impayés sur " + b.getId());
                     break;
                 case COURRIER:
-                    new CourrierService().imprimerEtPoster(e.getNomComplet(), e.getAdresse(), "Relance loyer impayé",
+                    NotificateurFactory.creerCourrierService().imprimerEtPoster(e.getNomComplet(), e.getAdresse(),
+                            "Relance loyer impayé",
                             "Il reste " + Utils.euros(b.soldeDu) + " à régler sur le bail " + b.getId() + ".");
                     break;
                 default:
@@ -416,10 +404,10 @@ public class GestionResidence {
         if (canal.equals(EMAIL)) {
             EmailService.envoyer(e.getEmail(), sujet, message);
         } else if (canal.equals(SMS)) {
-            SmsService sms = new SmsService();
+            SmsService sms = NotificateurFactory.creerSmsService();
             sms.envoyerSms(e.getTelephone(), sujet + " - " + message);
         } else if (canal.equals(COURRIER)) {
-            CourrierService courrier = new CourrierService();
+            CourrierService courrier = NotificateurFactory.creerCourrierService();
             courrier.imprimerEtPoster(e.getNomComplet(), e.getAdresse(), sujet, message);
         }
         // les internationaux reçoivent toujours un email en plus (demande de l'administration)

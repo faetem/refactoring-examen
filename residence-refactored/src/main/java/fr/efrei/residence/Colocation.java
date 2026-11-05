@@ -10,7 +10,7 @@ public class Colocation extends Logement {
     private int places;
     private List<Etudiant> colocataires = new ArrayList<Etudiant>();
 
-    public Colocation(String numero, double surface, int etage, boolean meuble, int places) {
+    Colocation(String numero, double surface, int etage, boolean meuble, int places) {
         super(numero, COLOCATION, surface, etage, meuble);
         this.places = places;
     }

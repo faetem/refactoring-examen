@@ -6,7 +6,7 @@ import static fr.efrei.residence.contrat.TypeLogement.STUDIO;
 
 public class Studio extends Logement {
 
-    public Studio(String numero, double surface, int etage, boolean meuble) {
+    Studio(String numero, double surface, int etage, boolean meuble) {
         super(numero, STUDIO, surface, etage, meuble);
     }
 

@@ -29,32 +29,11 @@ public class Residence {
     public static void initialiser() {
         logements.clear();
         for (String ligne : CATALOGUE) {
-            String[] t = ligne.split(";");
-            String type = t[0];
-            String numero = t[1];
-            double surface = Double.parseDouble(t[2]);
-            int etage = Integer.parseInt(t[3]);
-            boolean meuble = Boolean.parseBoolean(t[4]);
-            int param = Integer.parseInt(t[5]);
-            Logement l;
-            switch (type) {
-                case "STUDIO":
-                    l = new Studio(numero, surface, etage, meuble);
-                    break;
-                case "T1":
-                    l = new T1(numero, surface, etage, meuble);
-                    break;
-                case "T2":
-                    l = new T2(numero, surface, etage, meuble, param);
-                    break;
-                case "COLOCATION":
-                    l = new Colocation(numero, surface, etage, meuble, param);
-                    break;
-                default:
-                    System.out.println("Type inconnu ignoré : " + type);
-                    continue;
+            try {
+                logements.add(LogementFactory.depuisLigneCatalogue(ligne));
+            } catch (IllegalArgumentException ex) {
+                System.out.println("Type inconnu ignoré : " + ex.getMessage());
             }
-            logements.add(l);
         }
     }
 
