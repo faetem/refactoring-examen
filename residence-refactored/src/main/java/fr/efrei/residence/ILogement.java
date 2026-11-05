@@ -1,5 +1,7 @@
 package fr.efrei.residence;
 
+import fr.efrei.residence.contrat.TypeLogement;
+
 import java.util.List;
 
 /**
@@ -9,7 +11,7 @@ public interface ILogement {
 
     String getNumero();
 
-    String getType();
+    TypeLogement getType();
 
     double getSurface();
 

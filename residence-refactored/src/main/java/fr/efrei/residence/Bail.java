@@ -1,8 +1,12 @@
 package fr.efrei.residence;
 
+import fr.efrei.residence.contrat.StatutBail;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import static fr.efrei.residence.contrat.StatutBail.*;
 
 public class Bail {
 
@@ -12,7 +16,7 @@ public class Bail {
     private LocalDate dateSignature;
     private LocalDate dateEntree;
     private LocalDate dateFin;
-    private String statut; // SIGNE, ACTIF, PREAVIS, TERMINE, ANNULE
+    private StatutBail statut; // SIGNE, ACTIF, PREAVIS, TERMINE, ANNULE
 
     private double loyerHorsCharges;
     private double charges;
@@ -35,7 +39,7 @@ public class Bail {
         this.etudiant = etudiant;
         this.logement = logement;
         this.dateSignature = dateSignature;
-        this.statut = "SIGNE";
+        this.statut = SIGNE;
     }
 
     public String getId() { return id; }
@@ -46,8 +50,8 @@ public class Bail {
     public void setDateEntree(LocalDate d) { this.dateEntree = d; }
     public LocalDate getDateFin() { return dateFin; }
     public void setDateFin(LocalDate d) { this.dateFin = d; }
-    public String getStatut() { return statut; }
-    public void setStatut(String statut) { this.statut = statut; }
+    public StatutBail getStatut() { return statut; }
+    public void setStatut(StatutBail statut) { this.statut = statut; }
     public double getLoyerHorsCharges() { return loyerHorsCharges; }
     public void setLoyerHorsCharges(double l) { this.loyerHorsCharges = l; }
     public double getCharges() { return charges; }

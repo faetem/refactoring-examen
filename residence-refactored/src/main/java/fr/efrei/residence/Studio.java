@@ -2,10 +2,12 @@ package fr.efrei.residence;
 
 import java.util.List;
 
+import static fr.efrei.residence.contrat.TypeLogement.STUDIO;
+
 public class Studio extends Logement {
 
     public Studio(String numero, double surface, int etage, boolean meuble) {
-        super(numero, "STUDIO", surface, etage, meuble);
+        super(numero, STUDIO, surface, etage, meuble);
     }
 
     public void ajouterColocataire(Etudiant e) {

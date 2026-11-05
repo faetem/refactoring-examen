@@ -25,6 +25,7 @@ public class Residence {
 
     public static List<Logement> logements = new ArrayList<Logement>();
 
+
     public static void initialiser() {
         logements.clear();
         for (String ligne : CATALOGUE) {
