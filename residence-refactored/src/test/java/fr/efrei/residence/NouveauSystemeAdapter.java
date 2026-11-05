@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
 
+import static fr.efrei.residence.GenerateurQuittance.genererQuittance;
+
 /**
  * Branche votre nouveau code sur les tests de contrat. Cette classe ne doit contenir que de la traduction.
  */
@@ -122,18 +124,18 @@ public class NouveauSystemeAdapter implements SystemeResidence {
 
     @Override
     public Optional<String> quittance(String idBail, YearMonth mois) {
-        return Optional.ofNullable(Database.baux.get(idBail)).map(b -> b.genererQuittance(mois.toString()));
+        return Optional.ofNullable(Database.baux.get(idBail)).map(b -> genererQuittance(b, mois.toString()));
 
     }
 
     @Override
     public void relancerImpayes() {
-        gestion.relancerImpayes();;
+        gestion.relancerImpayes();
     }
 
     @Override
     public String rapport() {
-        return gestion.genererRapport();
+        return GenerateurRapport.genererRapport();
     }
 
     @Override

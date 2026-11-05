@@ -2,6 +2,7 @@ package fr.efrei.residence;
 
 import java.time.LocalDate;
 
+import static fr.efrei.residence.GenerateurQuittance.genererQuittance;
 import static fr.efrei.residence.contrat.Canal.*;
 import static fr.efrei.residence.contrat.Profil.*;
 import static fr.efrei.residence.contrat.TypeLogement.*;
@@ -68,8 +69,8 @@ public class Main {
         gestion.payerLoyer(bC.getId(), "2026-10", LocalDate.of(2026, 10, 1), 1000);
 
         System.out.println();
-        System.out.println(bD.genererQuittance("2026-09"));
-        System.out.println(bA.genererQuittance("2026-10"));
+        System.out.println(genererQuittance(bD, "2026-09"));
+        System.out.println(genererQuittance(bA,"2026-10"));
 
         System.out.println();
         gestion.relancerImpayes();
